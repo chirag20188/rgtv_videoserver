@@ -165,7 +165,7 @@ return [
         Pbmedia\LaravelFFMpeg\FFMpegServiceProvider::class,
         Aws\Laravel\AwsServiceProvider::class,
 
-
+        \Pion\Laravel\ChunkUpload\Providers\ChunkUploadServiceProvider::class,
     ],
 
     /*
