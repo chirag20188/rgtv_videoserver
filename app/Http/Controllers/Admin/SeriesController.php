@@ -23,6 +23,7 @@ use Intervention\Image\Facades\Image;
 use Pbmedia\LaravelFFMpeg\FFMpegFacade as FFMpeg;
 use \Done\Subtitles\Subtitles;
 use Illuminate\Support\Facades\App;
+use App\Jobs\ConvertSeriesVideo;
 
 class SeriesController extends Controller
 {
@@ -32,19 +33,6 @@ class SeriesController extends Controller
     public $name;
     public $WatermarkPosition = null;
     public $tmdb_id;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            $this->admin = Auth::user()->authorizeRoles(['admin', 'manager']);
-            return $next($request);
-        });
-    }
 
     /**
      * Display a listing of the resource.
@@ -1458,6 +1446,7 @@ class SeriesController extends Controller
         $idEpisodeList = json_decode($request->id);
         $listVideoNameAndId = [];
 
+        \Log::info('uploadEpisodeVideoToLocal',[$request->all()]);
 
         if ($request->has('video_link')) {
             // Video decode
@@ -1497,11 +1486,11 @@ class SeriesController extends Controller
 
         } elseif ($request->video !== 'undefined' && !empty($request->video)) {
 
-            foreach ($request->file('video') as $videoKey => $videoValue) {
-                if ($idEpisodeList[$videoKey]->episode_number == strtok($videoValue->getClientOriginalName(), '.')) {
+            foreach ($request->video as $videoKey => $videoValue) {
+                if ($idEpisodeList[$videoKey]->episode_number == strtok($videoValue, '_')) {
 
                     // upload videos episode
-                    $path = Storage::disk('public')->put('temp', $videoValue);
+                    $path = 'temp_movie/'.$videoValue;
                     $listVideoNameAndId[$videoKey]['id'] = $idEpisodeList[$videoKey]->id;
                     $listVideoNameAndId[$videoKey]['path'] = $path;
                     $listVideoNameAndId[$videoKey]['episode_number'] = $idEpisodeList[$videoKey]->episode_number;
@@ -1531,13 +1520,16 @@ class SeriesController extends Controller
 
                     if ($transcode) {
                         //Store video data
-                        $video = new Video();
-                        $video->video_format = 'hls';
-                        $video->video_cloud = 'local';
-                        $video->episode_id = $videoValue['id'];
-                        $video->resolution = '720';
-                        $video->video_url = '/storage/' . $path_upload . $newNameM3U8;
-                        $video->save();
+                        \Log::info('Transcoding done');
+                
+                        $this->saveVideo([
+                            "video_format" => 'hls', 
+                            "video_cloud" => 'local', 
+                            "episode_id" => $videoValue['id'],
+                            "resolution" => '720',
+                            "video_url" => '/storage/' . $path_upload . $newNameM3U8
+                        ]);
+
                     } else {
                         // Throw error
                         return $transcode;
@@ -1595,13 +1587,14 @@ class SeriesController extends Controller
                                 ->save($path_upload . '/' . $newNameMP4);
 
                             // Store video data
-                            $video = new Video();
-                            $video->episode_id = $videoValue['id'];
-                            $video->resolution = '4k';
-                            $video->video_url = '/storage/' . $path_upload . '/' . $newNameMP4;
-                            $video->video_cloud = 'local';
-                            $video->video_format = 'mp4';
-                            $video->save();
+                            $this->saveVideo([
+                                "video_format" => 'mp4', 
+                                "video_cloud" => 'local', 
+                                "episode_id" => $videoValue['id'],
+                                "resolution" => '4k',
+                                "video_url" => '/storage/' . $path_upload . '/' . $newNameMP4
+                            ]);
+
                         }
 
                         if ($value['Resolution'] === '1080') {
@@ -1630,13 +1623,13 @@ class SeriesController extends Controller
                                 ->save($path_upload . '/' . $newNameMP4);
 
                             // Store video data
-                            $video = new Video();
-                            $video->episode_id = $videoValue['id'];
-                            $video->resolution = '1080';
-                            $video->video_url = '/storage/' . $path_upload . '/' . $newNameMP4;
-                            $video->video_cloud = 'local';
-                            $video->video_format = 'mp4';
-                            $video->save();
+                            $this->saveVideo([
+                                "video_format" => 'mp4', 
+                                "video_cloud" => 'local', 
+                                "episode_id" => $videoValue['id'],
+                                "resolution" => '1080',
+                                "video_url" => '/storage/' . $path_upload . '/' . $newNameMP4
+                            ]);
                         }
 
                         if ($value['Resolution'] === '720') {
@@ -1666,13 +1659,13 @@ class SeriesController extends Controller
                                 ->save($path_upload . '/' . $newNameMP4);
 
                             // Store video data
-                            $video = new Video();
-                            $video->episode_id = $videoValue['id'];
-                            $video->resolution = '720';
-                            $video->video_url = '/storage/' . $path_upload . '/' . $newNameMP4;
-                            $video->video_cloud = 'local';
-                            $video->video_format = 'mp4';
-                            $video->save();
+                            $this->saveVideo([
+                                "video_format" => 'mp4', 
+                                "video_cloud" => 'local', 
+                                "episode_id" => $videoValue['id'],
+                                "resolution" => '720',
+                                "video_url" => '/storage/' . $path_upload . '/' . $newNameMP4
+                            ]);
                         }
 
                         if ($value['Resolution'] === '480') {
@@ -1702,13 +1695,13 @@ class SeriesController extends Controller
                                 ->save($path_upload . '/' . $newNameMP4);
 
                             // Store video data
-                            $video = new Video();
-                            $video->episode_id = $videoValue['id'];
-                            $video->resolution = '480';
-                            $video->video_url = '/storage/' . $path_upload . '/' . $newNameMP4;
-                            $video->video_cloud = 'local';
-                            $video->video_format = 'mp4';
-                            $video->save();
+                            $this->saveVideo([
+                                "video_format" => 'mp4', 
+                                "video_cloud" => 'local', 
+                                "episode_id" => $videoValue['id'],
+                                "resolution" => '480',
+                                "video_url" => '/storage/' . $path_upload . '/' . $newNameMP4
+                            ]);
                         }
 
                         if ($value['Resolution'] === '320') {
@@ -1738,13 +1731,13 @@ class SeriesController extends Controller
                                 ->save($path_upload . '/' . $newNameMP4);
 
                             // Store video data
-                            $video = new Video();
-                            $video->episode_id = $videoValue['id'];
-                            $video->resolution = '320';
-                            $video->video_url = '/storage/' . $path_upload . '/' . $newNameMP4;
-                            $video->video_cloud = 'local';
-                            $video->video_format = 'mp4';
-                            $video->save();
+                            $this->saveVideo([
+                                "video_format" => 'mp4', 
+                                "video_cloud" => 'local', 
+                                "episode_id" => $videoValue['id'],
+                                "resolution" => '320',
+                                "video_url" => '/storage/' . $path_upload . '/' . $newNameMP4
+                            ]);
                         }
                     }
                 }
@@ -2193,6 +2186,38 @@ class SeriesController extends Controller
                 'all_views' => DB::table('recently_watcheds')->where('series_id', $id)->count()
             ]
         ]);
+    }
+
+    public function startJob(Request $request) {
+        \Log::info('Transcoding start');
+        
+        // job for convert video to selected formate
+        dispatch(new ConvertSeriesVideo($request->all()));
+        
+        return response()->json(['status' => 'success', 'message' => 'We have started transcoding process.', 'id' => $request->id], 200);
+    }
+
+    public function saveVideo($data){
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => "https://rg-tv.com/api/v1/save/transcoded/series/video",
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => "",
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => "POST",
+          CURLOPT_POSTFIELDS => json_encode($data),
+          CURLOPT_HTTPHEADER => array(
+            "Content-Type: application/json"
+          ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
     }
 
 

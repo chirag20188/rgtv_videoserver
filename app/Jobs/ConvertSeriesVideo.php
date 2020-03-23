@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Traits\FFmpegTranscoding;
 
-class ConvertVideo implements ShouldQueue
+class ConvertSeriesVideo implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, FFmpegTranscoding;
 	
@@ -38,7 +38,7 @@ class ConvertVideo implements ShouldQueue
 		\Log::info('Cron has sent request for tanscoding');
 
 		curl_setopt_array($curl, array(
-			CURLOPT_URL => "https://rg-tv.com/transcoding/link/api/movies/convert",
+			CURLOPT_URL => "https://rg-tv.com/transcoding/link/api/series/convert",
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_ENCODING => "",
 			CURLOPT_MAXREDIRS => 10,
