@@ -11,3 +11,4 @@
     });
 
 	Route::post('/upload', 'UploadController@upload');
+	Route::post('/delete/directory', 'UploadController@deleteDirectory');

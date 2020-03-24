@@ -105,4 +105,11 @@ class UploadController extends Controller
         $filename .= "_" . md5(time()) . "." . $extension;
         return $filename;
     }
+
+    public function deleteDirectory(Request $request) {
+        if($request->path){
+            Storage::disk('public')->deleteDirectory($request->path);
+        }
+        return response()->json(['status' => 'success', 'message' => 'successful delete ']);
+    }
 }
