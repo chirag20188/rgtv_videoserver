@@ -1446,8 +1446,6 @@ class SeriesController extends Controller
         $idEpisodeList = json_decode($request->id);
         $listVideoNameAndId = [];
 
-        \Log::info('uploadEpisodeVideoToLocal',[$request->all()]);
-
         if ($request->has('video_link')) {
             // Video decode
             $videos = json_decode($request->video_link);
@@ -1526,9 +1524,10 @@ class SeriesController extends Controller
                             "video_format" => 'hls', 
                             "video_cloud" => 'local', 
                             "episode_id" => $videoValue['id'],
-                            "resolution" => '720',
+                            "resolution" => isset($resolution[0]['Resolution'])?$resolution[0]['Resolution']:'720',
                             "video_url" => '/storage/' . $path_upload . $newNameM3U8
                         ]);
+                        unlink(storage_path('app/public/'.$videoValue['path']));
 
                     } else {
                         // Throw error

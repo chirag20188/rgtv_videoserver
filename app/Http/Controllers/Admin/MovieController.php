@@ -59,7 +59,12 @@ class MovieController extends Controller
 			if ($transcoding) {        
 				\Log::info('Transcoding done');
 				
-				$video_array = array("id" => $request_param['id'], "m_name" => $request_param['m_name'], "formate" => $newNameM3U8);
+				$video_array = array(
+					"id" => $request_param['id'], 
+					"m_name" => $request_param['m_name'], 
+					"formate" => $newNameM3U8, 
+					"resolution" => isset($resolution[0]['Resolution'])?$resolution[0]['Resolution']:'720',
+				);
 				$curl = curl_init();
 
 				curl_setopt_array($curl, array(
@@ -81,6 +86,8 @@ class MovieController extends Controller
 
 				curl_close($curl);
 				
+				unlink(storage_path('app/public/'.$path));
+
 			} else {
 				\Log::info('Transcoding failed');
 				// Error
