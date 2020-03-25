@@ -27,10 +27,17 @@ class UploadController extends Controller
         if ($receiver->isUploaded() === false) {
             throw new UploadMissingFileException();
         }
+
+        $resumablefilestatus = $request->session()->get('resumablefilestatus-' . str_replace($request->resumableIdentifier,'-',''));
+        if($resumablefilestatus < $request->resumableChunkNumber ) {
+            $request->session()->put('resumablefilestatus-' . str_replace($request->resumableIdentifier,'-',''), $request->resumableChunkNumber);
+        }
+
         // receive the file
         $save = $receiver->receive();
         // check if the upload has finished (in chunk mode it will send smaller files)
         if ($save->isFinished()) {
+            $request->session()->forget('resumablefilestatus-' . str_replace($request->resumableIdentifier,'-',''));
             // save the file and return any response you need, current example uses `move` function. If you are
             // not using move, you need to manually delete the file by unlink($save->getFile()->getPathname())
             return $this->saveFile($save->getFile());
@@ -40,6 +47,20 @@ class UploadController extends Controller
         $handler = $save->handler();
         return response()->json([
             "done" => $handler->getPercentageDone(),
+            'status' => true
+        ]);
+    }
+
+    public function checkUpload(Request $request) {
+        $resumablefilestatus = $request->session()->get('resumablefilestatus-' . str_replace($request->resumableIdentifier,'-',''));
+
+        if( $resumablefilestatus==null || $resumablefilestatus < $request->resumableChunkNumber){
+            return response([
+                'status' => true,
+            ], 204);
+        }
+
+        return response()->json([
             'status' => true
         ]);
     }
